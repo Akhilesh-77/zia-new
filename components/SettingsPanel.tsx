@@ -14,6 +14,8 @@ interface SettingsPanelProps {
   onSelectAI: (model: AIModelOption) => void;
   voicePreference: VoicePreference | null;
   onSetVoicePreference: (voice: VoicePreference | null) => void;
+  hasConsented: boolean;
+  onConsentChange: (agreed: boolean) => void;
 }
 
 const aiModelOptions: { id: AIModelOption, name: string }[] = [
@@ -23,8 +25,9 @@ const aiModelOptions: { id: AIModelOption, name: string }[] = [
     { id: 'gemini-flash-lite-latest', name: 'Gemini Flash Lite' },
 ];
 
-const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, theme, toggleTheme, onClearData, selectedAI, onSelectAI, voicePreference, onSetVoicePreference }) => {
+const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, theme, toggleTheme, onClearData, selectedAI, onSelectAI, voicePreference, onSetVoicePreference, hasConsented, onConsentChange }) => {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [isDisclaimerExpanded, setIsDisclaimerExpanded] = useState(false);
 
   useEffect(() => {
     const loadVoices = () => {
@@ -118,9 +121,59 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose, theme, t
                         Clear All Data
                     </button>
                 </div>
+
+                <div className="bg-white/5 dark:bg-black/10 p-4 rounded-xl">
+                    {!isDisclaimerExpanded && (
+                        <div 
+                            onClick={() => setIsDisclaimerExpanded(true)} 
+                            className="cursor-pointer text-sm font-medium"
+                        >
+                            Disclaimer: Tap to view more ▼
+                        </div>
+                    )}
+
+                    {isDisclaimerExpanded && (
+                        <div className="animate-fadeIn">
+                            <p className="text-sm font-bold not-italic">Disclaimer (Official Note)</p>
+                            <div className="text-xs italic text-gray-400 space-y-2 mt-1">
+                                <p>These chatbots and characters are completely fictional.</p>
+                                <p>Even if they seem connected to real-life people, they’re made only for entertainment.</p>
+                                <p>Please don’t try to replicate them or their behavior in real life.</p>
+                                <p>Our Zia is soft and kind — but real humans aren’t always the same. 💫</p>
+                                <p className="not-italic">— ziaakia.ai team</p>
+                            </div>
+                            <div 
+                                onClick={() => setIsDisclaimerExpanded(false)} 
+                                className="cursor-pointer text-sm font-medium text-gray-300 mt-2"
+                            >
+                                ▲ Show less
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="pt-4 mt-4 border-t border-white/10">
+                        <label className="flex items-start cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                checked={hasConsented}
+                                onChange={(e) => onConsentChange(e.target.checked)}
+                                className="h-5 w-5 mt-0.5 text-accent bg-gray-700 border-gray-600 focus:ring-accent rounded flex-shrink-0"
+                                aria-labelledby="consent-label"
+                            />
+                            <span id="consent-label" className="ml-3 text-sm">
+                                I agree to the disclaimer and understand Zia.ai is for entertainment only.
+                            </span>
+                        </label>
+                        {!hasConsented && (
+                            <p className="text-red-500 text-xs mt-2 ml-8 animate-fadeIn">
+                                Please agree to the disclaimer to continue.
+                            </p>
+                        )}
+                    </div>
+                </div>
             </div>
 
-            <div className="mt-auto text-center text-xs text-gray-500 flex flex-col items-center gap-2">
+            <div className="mt-auto text-center text-xs text-gray-500 flex flex-col items-center gap-2 pt-4">
                 <img src="https://i.postimg.cc/qRB2Gnw2/Gemini-Generated-Image-vfkohrvfkohrvfko-1.png" alt="Zia.ai Logo" className="h-8 w-8"/>
                 <p>© 2025 Zia.ai — Powered by Gemini AI</p>
             </div>

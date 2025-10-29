@@ -26,6 +26,7 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedAI, setSelectedAI] = useState<AIModelOption>('gemini-2.5-flash');
   const [voicePreference, setVoicePreference] = useState<VoicePreference | null>(null);
+  const [hasConsented, setHasConsented] = useState<boolean>(false);
 
   // Load data from localStorage on initial render
   useEffect(() => {
@@ -61,6 +62,10 @@ const App: React.FC = () => {
           setVoicePreference(savedVoice as VoicePreference);
       }
 
+      const savedConsent = localStorage.getItem('hasConsented');
+      if (savedConsent) {
+          setHasConsented(JSON.parse(savedConsent));
+      }
 
     } catch (error) {
         console.error("Failed to load data from localStorage", error);
@@ -81,6 +86,8 @@ const App: React.FC = () => {
         } else {
             localStorage.removeItem('voicePreference');
         }
+        localStorage.setItem('hasConsented', JSON.stringify(hasConsented));
+
 
         if (theme === 'dark') {
             document.documentElement.classList.add('dark');
@@ -90,9 +97,14 @@ const App: React.FC = () => {
     } catch (error) {
         console.error("Failed to save data to localStorage", error);
     }
-  }, [bots, personas, chatHistories, botUsage, theme, selectedAI, voicePreference]);
+  }, [bots, personas, chatHistories, botUsage, theme, selectedAI, voicePreference, hasConsented]);
 
   const handleNavigate = (page: Page) => {
+    if ((page === 'create') && !hasConsented) {
+        alert("Please agree to the disclaimer in the settings to continue.");
+        setIsSettingsOpen(true);
+        return;
+    }
     if (page === 'create') {
         setBotToEdit(null);
     }
@@ -100,6 +112,12 @@ const App: React.FC = () => {
   };
   
   const handleSelectBot = (id: string) => {
+    if (!hasConsented) {
+        alert("Please agree to the disclaimer in the settings to continue.");
+        setIsSettingsOpen(true);
+        return;
+    }
+    
     // FIX: Ensure chat history is initialized with the scenario message if it doesn't exist.
     if (!chatHistories[id] || chatHistories[id].length === 0) {
       const bot = bots.find(b => b.id === id);
@@ -218,6 +236,10 @@ const App: React.FC = () => {
       }
   };
 
+  const handleConsentChange = (agreed: boolean) => {
+    setHasConsented(agreed);
+  };
+
   const selectedBot = bots.find(b => b.id === selectedBotId);
   const personaForBot = personas.find(p => p.id === selectedBot?.personaId);
   
@@ -283,6 +305,8 @@ const App: React.FC = () => {
         onSelectAI={setSelectedAI}
         voicePreference={voicePreference}
         onSetVoicePreference={setVoicePreference}
+        hasConsented={hasConsented}
+        onConsentChange={handleConsentChange}
       />
       <div className="flex-1 overflow-hidden">
         {renderPage()}
